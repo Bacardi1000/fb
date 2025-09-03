@@ -2,38 +2,37 @@ name: Deploy to Firebase Hosting
 
 on:
   push:
-    branches: [ "main" ]   # change if your default branch is different
-  workflow_dispatch:
+    branches: [ "main" ]   # deploy only when pushing to main
+  workflow_dispatch:       # also let you trigger manually
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write      # OIDC
-      contents: read
+      id-token: write       # required for OIDC
+      contents: read        # required for checkout
 
     env:
       PROJECT_ID: viewsurein-471013
-      # If you use a specific Hosting site ID different from the default, set it:
+      # Uncomment if you have a custom site ID:
       # FIREBASE_SITE: your-site-id
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      # Auth to GCP via OIDC (no JSON keys)
-      - id: auth
+      - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
-  workload_identity_provider: projects/948396629418/locations/global/workloadIdentityPools/github-pool/providers/github
-  service_account: github-action@viewsurein-471013.iam.gserviceaccount.com
+          workload_identity_provider: projects/948396629418/locations/global/workloadIdentityPools/github-pool/providers/github
+          service_account: github-action@viewsurein-471013.iam.gserviceaccount.com
           create_credentials_file: true
           export_environment_variables: true
 
-      # Install Firebase CLI
       - name: Install Firebase CLI
         run: npm i -g firebase-tools
 
-      # Deploy static files in your repo to Firebase Hosting
       - name: Deploy to Firebase Hosting
         run: |
           if [ -n "${FIREBASE_SITE}" ]; then
